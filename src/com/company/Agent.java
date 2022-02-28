@@ -31,9 +31,10 @@ public class Agent extends Thread{
      */
     public void run() {
         try {
-            Thread.sleep(1000);
+            Thread.sleep(10000);
             this.path();
             //this.move();
+            Thread.sleep(10000);
         }
         catch (InterruptedException e) {
             e.printStackTrace();
@@ -71,7 +72,8 @@ public class Agent extends Thread{
     }
 
     /**
-     *
+     * Algo de basic pour atteindre la cible sans prendre en compte les autres
+     * @Return: ArrayList<Direction>
      */
     public synchronized ArrayList<Direction> path(){
         Random random = new Random();
@@ -82,38 +84,31 @@ public class Agent extends Thread{
         int[][] grid = environment.getGrid();
         int x = (int) position.getX();
         int y = (int) position.getY();
-        boolean isNotSatisfied = true;
-        System.out.println("\n id: " + this.id);
-        while (isNotSatisfied) {
-            if (x == targetPosition.getX() && y == targetPosition.getY()) {
-                isNotSatisfied = false;
-            } else if(x == targetPosition.getX()){
+
+        while (x != targetPosition.getX() || y != targetPosition.getY()) {
+            if(x == targetPosition.getX()){
                 //Juste modif y
                 if (y < targetPosition.y ) {
-                    System.out.print("y++ ");
                     y++;
                     path.add(Direction.DROITE);
                 } else {
-                    System.out.print("y-- ");
                     y--;
                     path.add(Direction.GAUCHE);
                 }
             } else {
                 if (x < targetPosition.x ) {
-                    System.out.print("x++ ");
                     x++;
                     path.add(Direction.BAS);
                 } else {
-                    System.out.print("x-- ");
                     x--;
                     path.add(Direction.HAUT);
                 }
             }
         }
 
-        for (int i = 0; i > path.size(); i++) {
-            System.out.println(path.get(i));
-        }
+        /*for (int i = 0; i < path.size(); i++) {
+            System.out.println("id:" + this.id + " " + path.get(i) + " ");
+        }*/
 
         return path;
     }
