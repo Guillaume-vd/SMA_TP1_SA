@@ -5,6 +5,5 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         Environment environment = new Environment(5, 4);
         environment.printGrid();
-
     }
 }

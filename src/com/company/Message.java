@@ -15,7 +15,7 @@ public class Message {
     private String action;
     private Point parameter;
 
-    Message(int senderId, int receiverId, String performative, String action, Point parameter) {
+    Message(int senderId, int receiverId, Point parameter) {
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.performative = performative;

@@ -2,6 +2,7 @@ package com.company;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -21,7 +22,6 @@ public class Agent extends Thread{
      * @param id            Identifiant de l'agent
      */
     Agent(Environment environment, int id) {
-
         this.environment = environment;
         this.id = id;
     }
@@ -31,23 +31,26 @@ public class Agent extends Thread{
      */
     public void run() {
         try {
-            Thread.sleep(10000);
-            this.path();
-            //this.move();
-            Thread.sleep(10000);
+            while(true) {
+                Thread.sleep(2000);
+                this.decide();
+            }
         }
         catch (InterruptedException e) {
             e.printStackTrace();
-            Thread.currentThread().interrupted();
+            interrupted();
         }
     }
 
     /**
      * Décision et déplacement de l'agent
      */
-    private synchronized void move() {
+    private void decide() {
 
-        Point pos = this.environment.getPosition(this.id);
+        synchronized(lock) {
+            System.out.println("id : " + this.id);
+
+            Point pos = this.getPosition();
 
         ArrayList<Direction> path = this.path();
         Point nextPos;
@@ -86,12 +89,12 @@ public class Agent extends Thread{
         int y = (int) position.getY();
 
         while (x != targetPosition.getX() || y != targetPosition.getY()) {
-            if(x == targetPosition.getX()){
+            if(random.nextInt(2) == 0){
                 //Juste modif y
                 if (y < targetPosition.y ) {
                     y++;
                     path.add(Direction.DROITE);
-                } else {
+                } else if (y > targetPosition.y){
                     y--;
                     path.add(Direction.GAUCHE);
                 }
@@ -99,13 +102,19 @@ public class Agent extends Thread{
                 if (x < targetPosition.x ) {
                     x++;
                     path.add(Direction.BAS);
-                } else {
+                } else if (x > targetPosition.x ){
                     x--;
                     path.add(Direction.HAUT);
                 }
             }
+
+            if (x > grid.length && x < 0 && y > grid.length && y < 0) {
+                System.out.println("error in path");
+                break;
+            }
         }
 
+        //Print du chemin avec l'id puisque des appeles peuvent avoir lieu simultanément
         /*for (int i = 0; i < path.size(); i++) {
             System.out.println("id:" + this.id + " " + path.get(i) + " ");
         }*/
@@ -113,11 +122,93 @@ public class Agent extends Thread{
         return path;
     }
 
-    /***
-     * Interruption du thread courant
+    /**
+     * Algo de basic pour atteindre la cible en tenant compte les autres
+     * @Return: ArrayList<Direction>
      */
-    public void cancel() {
-        Thread.currentThread().interrupt() ;
+    public synchronized ArrayList<Direction> sneackyPath(){
+        Random random = new Random();
+        ArrayList<Direction> path = new ArrayList<>();
+
+        Point position = environment.getPosition(this.id);
+        Point targetPosition = environment.getTargetPosition(this.id);
+        int[][] grid = environment.getGrid();
+        int x = (int) position.getX();
+        int y = (int) position.getY();
+
+        int count = 0;
+
+        while (x != targetPosition.getX() || y != targetPosition.getY()) {
+            if(random.nextInt(2) == 0){
+                if (y < targetPosition.y) {
+                    if (environment.isPositionEmpty(x, y + 1)){
+                        y++;
+                        path.add(Direction.DROITE);
+                    } else if (x == targetPosition.getX()) {
+                        if (x > 0 && environment.isPositionEmpty(x - 1, y)){
+                            x--;
+                            path.add(Direction.HAUT);
+                        }
+                        else if (x < grid.length && environment.isPositionEmpty(x + 1, y)){
+                            x++;
+                            path.add(Direction.BAS);
+                        }
+                    }
+                } else if (y > targetPosition.y){
+                    if (environment.isPositionEmpty(x, y - 1)){
+                        y--;
+                        path.add(Direction.GAUCHE);
+                    } else if (x == targetPosition.getX()) {
+                        if (environment.isPositionEmpty(x - 1, y)) {
+                            x--;
+                            path.add(Direction.HAUT);
+                        }
+                        else if (environment.isPositionEmpty(x + 1, y)){
+                            x++;
+                            path.add(Direction.BAS);
+                        }
+                    }
+                }
+            }
+            else {
+                if (x < targetPosition.x ) {
+                    if (environment.isPositionEmpty(x+1, y)){
+                        x++;
+                        path.add(Direction.BAS);
+                    } else if (y == targetPosition.getY()){
+                        if (environment.isPositionEmpty(x, y-1)){
+                            y--;
+                            path.add(Direction.GAUCHE);
+                        } else if (environment.isPositionEmpty(x, y+1)){
+                            y++;
+                            path.add(Direction.DROITE);
+                        }
+                    }
+                } else if (x > targetPosition.x ){
+                    if (environment.isPositionEmpty(x-1, y)) {
+                        x--;
+                        path.add(Direction.HAUT);
+                    } else if (y == targetPosition.getY()) {
+                        if (environment.isPositionEmpty(x, y-1)){
+                            y--;
+                            path.add(Direction.GAUCHE);
+                        } else if (environment.isPositionEmpty(x, y+1)){
+                            y++;
+                            path.add(Direction.DROITE);
+                        }
+                    }
+                }
+            }
+
+            if (count >= 30) {
+                System.out.println("to much");
+                break;
+            }
+
+            count ++;
+        }
+
+        return path;
     }
 
 
