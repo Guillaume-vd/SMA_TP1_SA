@@ -17,6 +17,8 @@ public class Agent extends Thread{
     private Environment environment;
     // Identifiant de l'agent
     private int id;
+    // Derniere direction pousser
+    private Direction lastPush;
 
     /**
      * Constructeur de l'agent
@@ -58,6 +60,7 @@ public class Agent extends Thread{
             Message message = this.readMessage();
             if (message != null && message.getParameter().equals(pos)){
                 path = new ArrayList<>();
+                lastPush = findAgentCommeFrom(message.getSenderId());
                 path.add(this.findPositionToMove(message.getParameter()));
 
                 if (path.get(0) == null) {
@@ -96,6 +99,23 @@ public class Agent extends Thread{
                 this.environment.printGrid();
             }
 
+        }
+    }
+
+    private Direction findAgentCommeFrom(int senderId) {
+        Point other = environment.getPosition(senderId);
+        Point me = environment.getPosition(this.id);
+
+        if (other.x == me.x){ //viens de y
+            if (other.y > me.y)
+                return Direction.DROITE;
+            else
+                return Direction.GAUCHE;
+        } else {
+            if (other.x > me.x)
+                return Direction.HAUT;
+            else
+                return Direction.BAS;
         }
     }
 
@@ -344,10 +364,11 @@ public class Agent extends Thread{
                 d = Direction.DROITE;
             }
 
-            if (environment.isPositionEmpty(x,y) || nbTry >= 20) {
+            if ((environment.isPositionEmpty(x,y) && d != this.lastPush) || nbTry >= 20) {
                 go = true;
             }
         }
+
 
         return d;
     }
