@@ -11,15 +11,19 @@ public class Message {
 
     private int senderId;
     private int receiverId;
-    private String performative;
-    private String action;
     private Point parameter;
 
     Message(int senderId, int receiverId, Point parameter) {
         this.senderId = senderId;
         this.receiverId = receiverId;
-        this.performative = performative;
-        this.action = action;
         this.parameter = parameter;
     }
+
+    // --------------- GETTERS ------------------------
+
+    public int getSenderId() { return senderId; }
+
+    public int getReceiverId() { return receiverId; }
+
+    public Point getParameter() { return parameter; }
 }

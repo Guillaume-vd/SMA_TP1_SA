@@ -27,7 +27,7 @@ public class Environment {
     // Lien entre identifiant de l'agent et liste de ses messages reçus non-lus
     private HashMap<Integer, ArrayList<Message>> messages;
 
-        // Tableau des positions finales souhaitées pour les agents
+    // Tableau des positions finales souhaitées pour les agents
     private int[][] gridObjective;
     private HashMap<Integer, Point> agentsPositionObjective;
 
@@ -81,13 +81,20 @@ public class Environment {
             placesInit.remove(index);
         }
 
+        this.printGrid();
+
         // Activation des agents
         for(Agent a: agents.values()) a.start();
 
-        /*while(true) {
-            this.printGrid();
-            Thread.sleep(100);
-        }*/
+        // Vérification régulière de l'état
+        while(true) {
+            if(this.satisfactionState()) {
+                System.out.println("REUSSI");
+                for(Agent a: agents.values()) a.stop();
+                break;
+            };
+            Thread.sleep(1000);
+        }
     }
 
     /**
@@ -109,7 +116,7 @@ public class Environment {
     }
 
     /**
-     * Print la grilles de l'état actuelle et de la grille cible
+     * Affiche la grille actuelle et la grille cible
      */
     public void printGrid() {
         for (int i = 0; i < n; i++) {
@@ -152,21 +159,34 @@ public class Environment {
             Point agentPositionObjective = this.agentsPositionObjective.get(agentIndex);
 
             // On regarde si les positions sont différentes
-            if(this.agentsPosition.get(agentIndex).equals(this.agentsPositionObjective.get(agentIndex))){
+            if(!agentPosition.equals(agentPositionObjective)){
                 return false;
             }
-
         }
+
         return true;
     }
 
+    /**
+     * Retourne TRUE si aucun agent n'est sur la position donnée
+     *
+     * @param x Position en x
+     * @param y Position en y
+     *
+     * @return boolean
+     */
     public boolean isPositionEmpty(int x, int y) {
-        return this.grid[y][x] ==  -1;
+        if (x >= grid.length || x < 0 || y >= grid.length || y < 0){
+            return false;
+        }
+        return this.grid[x][y] ==  -1;
     }
 
     /**
-    *
-     * @param agentId
+     * Retourne la position d'un agent
+     *
+     * @param agentId Identifiant de l'agent
+     *
      * @return Point
      */
     public Point getPosition(int agentId){
@@ -174,11 +194,43 @@ public class Environment {
     }
 
     /**
+     * Retourne la position cible d'un agent
      *
-     * @param agentId
+     * @param agentId Identifiant de l'agent
+     *
      * @return Point
      */
     public Point getTargetPosition(int agentId){
         return this.agentsPositionObjective.get(agentId);
+    }
+
+    /**
+     * Met à jour la position d'un agent
+     *
+     * @param agentId Identifiant de l'agent
+     *
+     * @param nextPos Position suivante de l'agent
+     */
+    public void setPosition(int agentId, Point nextPos) {
+
+        // Récupération de la position courante de l'agent
+        Point currentPos = this.agentsPosition.get(agentId);
+        // MAJ de la position dans la HashMap
+        this.agentsPosition.put(agentId, nextPos);
+
+        // MAJ de la position dans la grille pour affichage console
+        this.grid[currentPos.x][currentPos.y] = -1;
+        this.grid[nextPos.x][nextPos.y] = agentId;
+    }
+
+    public void sendMessage(Message m) {
+        int receiverId = m.getReceiverId();
+
+        ArrayList<Message> receiverMessages = this.messages.get(receiverId);
+        receiverMessages.add(m);
+    }
+
+    public int getAgentIdByPosition(Point p) {
+        return this.grid[p.x][p.y];
     }
 }

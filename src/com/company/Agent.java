@@ -10,6 +10,9 @@ import java.util.Random;
  */
 public class Agent extends Thread{
 
+    // Objet permettant la synchronisation des actions des agents
+    public static Object lock = new Object();
+
     // Pointeur vers l'environnement
     private Environment environment;
     // Identifiant de l'agent
@@ -43,7 +46,7 @@ public class Agent extends Thread{
     }
 
     /**
-     * Décision et déplacement de l'agent
+     * Décision de l'agent
      */
     private void decide() {
 
@@ -52,28 +55,45 @@ public class Agent extends Thread{
 
             Point pos = this.getPosition();
 
-        ArrayList<Direction> path = this.path();
-        Point nextPos;
-        switch(path.get(0)) {
-            case HAUT:
-                nextPos = new Point(pos.x, pos.y - 1);
-                break;
-            case BAS:
-                nextPos = new Point(pos.x, pos.y + 1);
-                break;
-            case GAUCHE:
-                nextPos = new Point(pos.x - 1, pos.y);
-                break;
-            case DROITE:
-                nextPos = new Point(pos.x = 1, pos.y);
-                break;
+            ArrayList<Direction> path = this.path();
+            Point nextPos = null;
+            if(path.size() != 0) {
+                switch(path.get(0)) {
+                    case HAUT:
+                        nextPos = new Point(pos.x - 1, pos.y);
+                        break;
+                    case BAS:
+                        nextPos = new Point(pos.x + 1, pos.y);
+                        break;
+                    case GAUCHE:
+                        nextPos = new Point(pos.x, pos.y - 1);
+                        break;
+                    case DROITE:
+                        nextPos = new Point(pos.x, pos.y + 1);
+                        break;
+                }
+
+                System.out.println(path.get(0));
+                System.out.println(this.getPosition().x + " " +this.getPosition().y);
+                System.out.println(nextPos.x + " " + nextPos.y);
+
+                this.move(nextPos);
+
+                this.environment.printGrid();
+            }
+
         }
-
-        /*if(this.environment.isPositionEmpty(nextPos.x, nextPos.y)) {
-
-        }*/
     }
 
+    private void move(Point nextPos) {
+        if(this.environment.isPositionEmpty(nextPos.x, nextPos.y)) {
+            this.setPosition(nextPos);
+        }
+        else {
+            int receiverId = this.environment.getAgentIdByPosition(nextPos);
+            Message m = new Message(this.id, receiverId, nextPos);
+        }
+    }
     /**
      * Algo de basic pour atteindre la cible sans prendre en compte les autres
      * @Return: ArrayList<Direction>
@@ -211,8 +231,31 @@ public class Agent extends Thread{
         return path;
     }
 
+    /**
+     * Retourne la position courante de l'agent
+     *
+     * @return Point
+     */
+    private Point getPosition() {
+        return this.environment.getPosition(this.id);
+    }
 
-    public Environment getEnvironment() {
-        return environment;
+    /**
+     * Met à jour la position de l'agent
+     *
+     * @param p Nouvelle position
+     */
+    private void setPosition(Point p) {
+        this.environment.setPosition(this.id, p);
+    }
+
+    private Message readMessage() {
+        List<Message> messages = environment.getMessages().get(this.id);
+
+        if (messages.size() > 0) {
+            return messages.get(0);
+        }
+
+        return null;
     }
 }
