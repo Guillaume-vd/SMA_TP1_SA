@@ -54,8 +54,22 @@ public class Agent extends Thread{
             System.out.println("id : " + this.id);
 
             Point pos = this.getPosition();
+            ArrayList<Direction> path = null;
+            Message message = this.readMessage();
+            if (message != null && message.getParameter().equals(pos)){
+                path = new ArrayList<>();
+                path.add(this.findPositionToMove(message.getParameter()));
 
-            ArrayList<Direction> path = this.path();
+                if (path.get(0) == null) {
+                    System.out.println("je peux pas bouger sorry");
+                    int receiverId = this.environment.getAgentAroundMe(environment.getPosition(this.id));
+                    environment.sendMessage(new Message(this.id, receiverId, this.environment.getPosition(receiverId)));
+                }
+                environment.deleteMessage(message);
+            } else if (pos != environment.getTargetPosition(this.id)) {
+                path = this.path();
+            }
+
             Point nextPos = null;
             if(path.size() != 0) {
                 switch(path.get(0)) {
@@ -91,9 +105,10 @@ public class Agent extends Thread{
         }
         else {
             int receiverId = this.environment.getAgentIdByPosition(nextPos);
-            Message m = new Message(this.id, receiverId, nextPos);
+            environment.sendMessage(new Message(this.id, receiverId, nextPos));
         }
     }
+
     /**
      * Algo de basic pour atteindre la cible sans prendre en compte les autres
      * @Return: ArrayList<Direction>
@@ -142,6 +157,44 @@ public class Agent extends Thread{
         return path;
     }
 
+    /**
+     * Algo de basic pour atteindre la cible sans prendre en compte les autres
+     * @Return: ArrayList<Direction>
+     */
+    public synchronized ArrayList<Direction> randpath(){
+        System.out.println("randpath");
+        Random random = new Random();
+        ArrayList<Direction> path = new ArrayList<>();
+
+        Point position = environment.getPosition(this.id);
+        Point targetPosition = environment.getTargetPosition(this.id);
+        int[][] grid = environment.getGrid();
+        int x = (int) position.getX();
+        int y = (int) position.getY();
+        boolean randFind = false;
+
+        if (random.nextInt(4) == 0) {
+            y++;
+            path.add(Direction.DROITE);
+        } else if (random.nextInt(4) == 1) {
+            y--;
+            path.add(Direction.GAUCHE);
+        } else if (random.nextInt(4) == 2) {
+            x++;
+            path.add(Direction.BAS);
+        } else if (random.nextInt(4) == 3) {
+            x--;
+            path.add(Direction.HAUT);
+        }
+
+
+        //Print du chemin avec l'id puisque des appeles peuvent avoir lieu simultanément
+        /*for (int i = 0; i < path.size(); i++) {
+            System.out.println("id:" + this.id + " " + path.get(i) + " ");
+        }*/
+
+        return path;
+    }
     /**
      * Algo de basic pour atteindre la cible en tenant compte les autres
      * @Return: ArrayList<Direction>
@@ -251,11 +304,51 @@ public class Agent extends Thread{
 
     private Message readMessage() {
         List<Message> messages = environment.getMessages().get(this.id);
-
         if (messages.size() > 0) {
+            System.out.println(this.id + " have a message from " + messages.get(0).getSenderId());
+            environment.printGrid();
             return messages.get(0);
         }
 
         return null;
+    }
+
+    /**
+     * Trouve si possible un endroit ou se déplacer
+     * @param point
+     * @return Direction
+     */
+    private Direction findPositionToMove(Point point) {
+        boolean go = false;
+        Direction d = null;
+        Random random = new Random();
+        int nbTry = 0;
+
+        while (!go){
+            nbTry ++;
+            int x = point.x;
+            int y = point.y;
+            int r = random.nextInt(4);
+
+            if (r == 0) {
+                x--;
+                d = Direction.HAUT;
+            } else if (r == 1) {
+                x++;
+                d = Direction.BAS;
+            } else if (r == 2) {
+                y--;
+                d = Direction.GAUCHE;
+            } else if (r == 3) {
+                y++;
+                d = Direction.DROITE;
+            }
+
+            if (environment.isPositionEmpty(x,y) || nbTry >= 20) {
+                go = true;
+            }
+        }
+
+        return d;
     }
 }

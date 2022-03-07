@@ -123,9 +123,12 @@ public class Environment {
             // grid for actual position
             for (int j = 0; j < n; j++) {
                 if (this.grid[i][j] == -1) {
-                    System.out.print("[ ]");
+                    System.out.print("[  ]");
                 } else {
-                    System.out.print("[" + this.grid[i][j] + "]");
+                    if (this.grid[i][j] > 9)
+                        System.out.print("[" + this.grid[i][j] + "]");
+                    else
+                        System.out.print("[ " + this.grid[i][j] + "]");
                 }
             }
 
@@ -134,9 +137,12 @@ public class Environment {
             // Target grid
             for (int j = 0; j < n; j++){
                 if (this.gridObjective[i][j] == -1) {
-                    System.out.print("[ ]");
+                    System.out.print("[  ]");
                 } else {
-                    System.out.print("[" + this.gridObjective[i][j] + "]");
+                    if (this.gridObjective[i][j] > 9)
+                        System.out.print("[" + this.gridObjective[i][j] + "]");
+                    else
+                        System.out.print("[ " + this.gridObjective[i][j] + "]");
                 }
             }
             System.out.println("");
@@ -230,7 +236,36 @@ public class Environment {
         receiverMessages.add(m);
     }
 
+    public void deleteMessage(Message m) {
+        int receiverId = m.getReceiverId();
+        ArrayList<Message> receiverMessages = this.messages.get(receiverId);
+        receiverMessages.remove(0);
+    }
+
     public int getAgentIdByPosition(Point p) {
         return this.grid[p.x][p.y];
+    }
+
+    public int getAgentAroundMe(Point p) {
+        Random random = new Random();
+        int res = -1;
+
+        while (true){
+            int r = random.nextInt(4);
+            if (r == 0) {
+                res = this.getAgentIdByPosition(new Point(p.x - 1, p.y));
+            } else if (r == 1) {
+                res = this.getAgentIdByPosition(new Point(p.x + 1, p.y));
+            } else if (r == 2) {
+                res = this.getAgentIdByPosition(new Point(p.x, p.y - 1));
+            } else if (r == 3) {
+                res = this.getAgentIdByPosition(new Point(p.x, p.y + 1));
+            }
+
+            if (res != -1){
+                return res;
+            }
+        }
+
     }
 }
